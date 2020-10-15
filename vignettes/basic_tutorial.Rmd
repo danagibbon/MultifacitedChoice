@@ -1,0 +1,182 @@
+---
+title: "Basic Tutorial"
+author: "Dana Gibbon"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Basic Tutorial}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE, message=FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+library(DT)
+```
+
+# Quick start
+
+* Install `MultifacitedChoice` from GitHub
+
+```{r install, eval=FALSE}
+# Specify branch and build vignettes
+devtools::install_github("danagibbon/MultifacitedChoice",
+                         build_vignettes = FALSE)
+```
+
+## Load MultifacitedChoice
+
+```{r load}
+library(MultifacitedChoice)
+```
+
+
+## Input Data
+
+You need to have these 3 dataframes set up ahead of time.
+
+### GT-seq output
+
+Contains: 
+
+* Sample IDs
+* Raw Reads
+* On Target Reads  = reads w/ fwd primer seq AND probe seq / reads w/ fwd primer seq
+* Percent on Target
+* % of sites with coverage
+* IFI = This version also outputs the IFI score (Individual fuzziness index) for each individual sample.  This is a measure of DNA cross contamination and is calculated using read counts from background signal at homozygous and No-Call loci.  Low scores are better than high scores. (https://github.com/GTseq/GTseq-Pipeline/blob/master/GTseq_Genotyper_v3.pl)
+* The rest of the columns are sites
+
+**The site column names need to match the allele IDs in the allele info dataframe**
+
+```{r}
+geno <- read.csv(system.file("extdata", "sample_data.csv", package = "MultifacitedChoice"))
+datatable(head(geno)[,1:10],
+          filter = 'top',
+          rownames = TRUE,
+          extensions = 'Buttons',
+          options = list(pageLength = 10,
+                         dom = 'Bfrtip', 
+                         buttons = c('copy', 'csv', 'excel', 'pdf', 'print')))
+```
+
+### Meta Data
+
+This dataframe must include the following columns:
+
+* Sample IDs (must match Sample IDs from the GT-seq output)
+* Sex
+
+Optional column (you can add any you want) examples:
+
+* Date
+* Jack
+* Measurements
+
+```{r}
+meta_data <- read.csv(system.file("extdata", "meta_data.csv", package = "MultifacitedChoice"))
+datatable(head(meta_data),
+          filter = 'top',
+          rownames = TRUE,
+          extensions = 'Buttons',
+          options = list(pageLength = 10,
+                         dom = 'Bfrtip', 
+                         buttons = c('copy', 'csv', 'excel', 'pdf', 'print')))
+```
+
+### Allele Information
+
+Dataframe with:
+
+* Allele ID: chrom:position
+* Chromosome
+* Position
+* Site ID: **Must match the column names in the GT-seq output**
+* Advantage: "assortive" or "disassortive"
+
+
+```{r}
+allele_info <- read.csv(system.file("extdata", "allele_info.csv", package = "MultifacitedChoice"))
+datatable(head(allele_info),
+          filter = 'top',
+          rownames = TRUE,
+          extensions = 'Buttons',
+          options = list(pageLength = 10,
+                         dom = 'Bfrtip', 
+                         buttons = c('copy', 'csv', 'excel', 'pdf', 'print')))
+```
+
+# Make Database
+
+You will need 3 dataframes with the above criteria:
+
+* GT-seq output
+* Meta Data
+* Allele Information
+
+```{r}
+## Make the database
+DBs <- make_database(gtseq = geno, metadata = meta_data, 
+                     allele_info = allele_info)
+```
+
+
+# Get all possible matches
+
+Input:
+
+* Previously made Data Base
+* Females: Vector of up to 9 female sample IDs
+* Males: Vector of up to 9 male sample IDs
+* Type:
+    * `all_alleles`: each separate allele has `assortive` or `disassortive` classified.
+    * `assortive`: all assortive
+    * `disassortive`: all disassortive
+* Bonus (optional)
+
+
+```{r}
+# set samples
+females <- geno$Sample[1:7]
+print(females)
+males <- geno$Sample[20:26]
+print(males)
+
+# run samples, rank for each sample
+all_matings <- get_all_rankings(DB = DBs, females = females, males = males,
+                                type = "all_alleles")
+# one comparison
+datatable(all_matings[[1]],
+          filter = 'top',
+          rownames = TRUE,
+          extensions = 'Buttons',
+          options = list(pageLength = 10,
+                         dom = 'Bfrtip', 
+                         buttons = c('copy', 'csv', 'excel', 'pdf', 'print')))
+
+```
+
+# Rank Matches
+
+Input:
+
+* Females: Vector of the female sample IDs
+* Males: Vector of the male sample IDs
+* list from previous step
+
+
+```{r}
+tips <- rank_all_mates(females, males, ranked_list=all_matings)
+datatable(tips,
+          filter = 'top',
+          rownames = TRUE,
+          extensions = 'Buttons',
+          options = list(pageLength = 10,
+                         dom = 'Bfrtip', 
+                         buttons = c('copy', 'csv', 'excel', 'pdf', 'print')))
+
+```
+
