@@ -29,7 +29,7 @@
 #' @import tidyverse
 
 make_database <- function(gtseq, metadata, allele_info, verbose=TRUE){
-  # check samples
+  # check sample ids match in both dfs
   if((length(which(metadata$Sample %in% gtseq$Sample)) == nrow(metadata)) &
      (length(which(gtseq$Sample %in% metadata$Sample)) == nrow(gtseq))) {
     if(verbose == TRUE) {
@@ -38,15 +38,35 @@ make_database <- function(gtseq, metadata, allele_info, verbose=TRUE){
   } else {
     if(length(which(!(metadata$Sample %in% gtseq$Sample))) > 0) {
       meta.n <- metadata$Sample[which(!(metadata$Sample %in% gtseq$Sample))]
-      warning("WARNING: not all sample IDs match - missing sample IDs from gtseq input: ", meta.n)
+      warning("\nWARNING: not all sample IDs match - missing sample IDs from gtseq input: ", meta.n)
     }
     if(length(which(!(gtseq$Sample %in% metadata$Sample))) > 0) {
       gt.n <- gtseq$Sample[which(!(gtseq$Sample %in% metadata$Sample))]
-      warning("WARNING: not all sample IDs match - missing sample IDs from metadata input: ", gt.n)
+      warning("\nWARNING: not all sample IDs match - missing sample IDs from metadata input: ", gt.n)
     }
   }
 
-  # check allele loci
+  # check allele loci id match in both dfs
+  ## get correct columns
+  gtseq.c <- gtseq %>%
+    select(-c(Sample:IFI)) %>%
+    colnames()
+  ## run the check
+  if((length(which(allele_info$site_id %in% gtseq.c)) == nrow(allele_info)) &
+     (length(which(gtseq.c %in% allele_info$site_id)) == length(gtseq.c))) {
+    if(verbose == TRUE) {
+      message("All loci allele IDs found")
+    }
+  } else {
+    if(length(which(!(allele_info$site_id %in% gtseq.c))) > 0) {
+      allele.a <- allele_info$site_id[which(!(allele_info$site_id %in% gtseq.c))]
+      warning("\nWARNING: not all site IDs match - missing site IDs from gtseq input: ", allele.a)
+    }
+    if(length(which(!(gtseq.c %in% allele_info$site_id))) > 0) {
+      gt.a <- gtseq.c[which(!(gtseq.c %in% allele_info$site_id))]
+      warning("\nWARNING: not all site IDs match - missing site IDs from allele_info input: ", gt.a)
+    }
+  }
 
   # Start Database
   DB_Test <- RSQLite::dbConnect(RSQLite::SQLite(), ":memory:")
