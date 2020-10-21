@@ -4,7 +4,7 @@
 \alias{make_database}
 \title{Make Database}
 \usage{
-make_database(gtseq, metadata, allele_info)
+make_database(gtseq, metadata, allele_info, verbose = TRUE)
 }
 \arguments{
 \item{gtseq}{Comma separated file that is the output of the GT-seq pipeline.
@@ -18,6 +18,8 @@ columns may be present.}
 \item{allele_info}{Comma separated file with information about the loci of interest.
 The \code{site_id} must match the Allele IDs from the GT-seq output. the \code{advantage} column
 is required if the \code{type} \code{all_alleles} is specified.}
+
+\item{verbose}{show messages, logical - default = TRUE}
 }
 \value{
 An RSQLite database saved to memory

@@ -15,6 +15,7 @@
 #' @param allele_info Comma separated file with information about the loci of interest.
 #' The `site_id` must match the Allele IDs from the GT-seq output. the `advantage` column
 #' is required if the `type` `all_alleles` is specified.
+#' @param verbose show messages, logical - default = TRUE
 #' @return An RSQLite database saved to memory
 #' @export
 #' @examples
@@ -27,7 +28,26 @@
 #' @import stringr
 #' @import tidyverse
 
-make_database <- function(gtseq, metadata, allele_info){
+make_database <- function(gtseq, metadata, allele_info, verbose=TRUE){
+  # check samples
+  if((length(which(metadata$Sample %in% gtseq$Sample)) == nrow(metadata)) &
+     (length(which(gtseq$Sample %in% metadata$Sample)) == nrow(gtseq))) {
+    if(verbose == TRUE) {
+      message("All Sample IDs found")
+    }
+  } else {
+    if(length(which(!(metadata$Sample %in% gtseq$Sample))) > 0) {
+      meta.n <- metadata$Sample[which(!(metadata$Sample %in% gtseq$Sample))]
+      warning("WARNING: not all sample IDs match - missing sample IDs from gtseq input: ", meta.n)
+    }
+    if(length(which(!(gtseq$Sample %in% metadata$Sample))) > 0) {
+      gt.n <- gtseq$Sample[which(!(gtseq$Sample %in% metadata$Sample))]
+      warning("WARNING: not all sample IDs match - missing sample IDs from metadata input: ", gt.n)
+    }
+  }
+
+  # check allele loci
+
   # Start Database
   DB_Test <- RSQLite::dbConnect(RSQLite::SQLite(), ":memory:")
   ## Get original DF
