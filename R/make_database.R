@@ -116,3 +116,47 @@ make_database <- function(gtseq, metadata, allele_info, verbose=TRUE){
   )
   return(DB_Test)
 }
+
+
+#' Save Database
+#'
+#' This function saves the database you made with make_database to disk
+#'
+#' @param DB Object your database is saved in memory to.
+#' @param path path to where you want the database saved
+#' @return An RSQLite database saved to disk
+#' @export
+#' @examples
+#' \dontrun{
+#' save_database(DB = DBs, path = "database.sqlite")
+#' }
+#' @import dplyr
+#' @import RSQLite
+#' @import stringr
+#' @import tidyverse
+
+save_database <- function(DB, path){
+  RSQLite::sqliteCopyDatabase(DB, path)
+}
+
+
+#' Read Database
+#'
+#' This function reads an sqlite database from disk to memory
+#'
+#' @param path path to saved sqlite database
+#' @return An RSQLite database to memory
+#' @export
+#' @examples
+#' \dontrun{
+#' DBs <- read_database(path = "database.sqlite")
+#' }
+#' @import dplyr
+#' @import RSQLite
+#' @import stringr
+#' @import tidyverse
+
+read_database <- function(path){
+  return(RSQLite::dbConnect(RSQLite::SQLite(), path))
+}
+
